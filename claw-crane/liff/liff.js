@@ -6,6 +6,7 @@ const CHARACTERISTIC_NOTIFY_UUID = "82d23d9a-91b9-4933-96b0-966a148e9a43";
 
 const DEVICE_CMD_ARM_X = 1;
 const DEVICE_CMD_ARM_Y = 2;
+const DEVICE_CMD_TIMEOUT = 4;
 
 const deviceUUIDSet = new Set();
 const connectedUUIDSet = new Set();
@@ -75,7 +76,7 @@ async function findDevice() {
       connectDevice(device);
     } else {
       // TODO: Maybe this is unofficial hack > device.rssi
-      document.querySelector(`#${device.id} .rssi`).innerText = device.rssi;
+      //document.querySelector(`#${device.id} .rssi`).innerText = device.rssi;
     }
 
     checkAvailablityAndDo(() => setTimeout(findDevice, 100));
@@ -198,7 +199,7 @@ function initializeCardForDevice(device) {
         updateArm(device, DEVICE_CMD_ARM_Y, 0).catch(e => onScreenLog(`ERROR on updateArm(): ${e}\n${e.stack}`));
         getDeviceButton2(device).classList.remove('btn-primary');
         getDeviceButton2(device).classList.add('btn-secondary');
-        getDeviceMachineStatus(device).innerText = "ありがとうございました! 自動的に接続が切れて次のプレーヤーに権限が移ります。";
+        getDeviceMachineStatus(device).innerText = "ありがとうございました! 自動的に接続が切れます。";
         armState = 0;
       }
     }
@@ -249,7 +250,7 @@ function updateConnectionStatus(device, status) {
 }
 
 async function updateArm(device, direction, value) {
-  onScreenLog("Write" + direction + value);
+  onScreenLog("Write : " + direction + ", " + value);
 
   const characteristic = await getCharacteristic(
     device, SERVICE_UUID, CHARACTERISTIC_WRITE_UUID);
@@ -273,13 +274,38 @@ async function readStatusValue(device) {
     return null;
   });
 
-  onScreenLog('read status value-1');
-
   if (valueBuffer !== null) {
     valueUpdateToGui(device, valueBuffer);
-    onScreenLog('read status value-2');
   }
 }
+
+let timeoutTimer;
+let remainingTime = 40;
+
+function startTimeoutTimer(device) {
+  timeoutTimer = setInterval(function() {
+    remainingTime--;
+    onScreenLog("remaining time = " + remainingTime);
+    if (remainingTime < 11) {
+      getDeviceRemainingTime(device).style.color = "red";
+    } else {
+      getDeviceRemainingTime(device).style.color = "black";
+    }
+    getDeviceRemainingTime(device).innerText = "残り時間 : " + remainingTime;
+    if (remainingTime == 0) {
+      clearInterval(timeoutTimer);
+      getDeviceButton1(device).classList.remove('btn-primary');
+      getDeviceButton1(device).classList.add('btn-secondary');
+      getDeviceButton2(device).classList.remove('btn-primary');
+      getDeviceButton2(device).classList.add('btn-secondary');
+      getDeviceRemainingTime(device).innerText = "";
+      getDeviceMachineStatus(device).innerText = "ありがとうございました! 自動的に接続が切れます。";
+      updateArm(device, DEVICE_CMD_TIMEOUT, 1).catch(e => onScreenLog(`ERROR on startTimeoutTimer(): ${e}\n${e.stack}`));
+      armState = 0;
+    }
+  }, 1000);
+}
+
 
 async function valueUpdateToGui(device, value) {
   if (value == 2) { //対象者のコインを入れたときにこれが来る。
@@ -289,12 +315,15 @@ async function valueUpdateToGui(device, value) {
     getDeviceButton2(device).classList.remove('btn-primary');
     getDeviceButton2(device).classList.add('btn-secondary');
     coinInserted = 1;
+    remainingTime = 40;
+    startTimeoutTimer(device);
+
     /*
   } else if (value > 0 && value < 4) { // 待ち行列に並んでいるとき。
     getDeviceMachineStatus(device).innerText = "あと" + String(value) + "人が待っています。しばらくお待ち下さい。";
     */
   } else if (value == 1) { // 対象者の順番が来て、コインを入れる準備ができたときにこれが来る。
-    getDeviceMachineStatus(device).innerText = "順番が来ました。マシーンにコインを入れてください。";
+    getDeviceMachineStatus(device).innerText = "マシーンにコインを入れてください。";
   }
 }
 
@@ -351,6 +380,10 @@ function getDeviceDisconnectButton(device) {
 
 function getDeviceMachineStatus(device) {
   return getDeviceCard(device).getElementsByClassName('machine-status')[0];
+}
+
+function getDeviceRemainingTime(device) {
+  return getDeviceCard(device).getElementsByClassName('remaining-time')[0];
 }
 
 function getDeviceButton1(device) {

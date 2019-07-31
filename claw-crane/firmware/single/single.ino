@@ -31,6 +31,7 @@
  *********************************************************************************/
 #define DEVICE_CMD_ARM_X 1
 #define DEVICE_CMD_ARM_Y 2
+#define DEVICE_CMD_LIFF_TIMEOUT 4
 
 /*********************************************************************************
  * Debug print
@@ -284,6 +285,7 @@ void setup() {
     bleServicePsdi_setup();
     bleServiceUser_setup();
     bleAdvert_start();
+    blesv_user_notify.notify8(0);  // Reset
 
     /*
     Serial.println("Clear bonding data\n");
@@ -300,6 +302,12 @@ void setup() {
     arm_x_pos_reset();
     arm_y_pos_reset();
     arm_z_pos_reset();
+
+    // Crane machine reset
+    digitalWrite(IO_ARM_POWER, 0);
+    delay(500);
+    digitalWrite(IO_ARM_POWER, 1);
+    delay(500);
     debugPrint("Init done");
 }
 
@@ -380,18 +388,14 @@ void loop() {
     String msg = "[BLE]Connected host";
     debugPrint(msg);
 
+    // Initializing
+    g_write_action.changed = 0;
+
     // ゲームを始める
-    blesv_user_notify.notify8(0);  // Reset
     delay(1000);
     digitalWrite(IO_SYSTEM_READY, 0);
     playGame();
 
-    // 遊び終わったホストの接続を強制的に切る
-    BLEConnection *connection = Bluefruit.Connection(last_connect_hdl);
-    if (connection->connected() == true) {
-        connection->disconnect();
-    }
-    debugPrint("[INFO]Disconnect to central automatic.");
     delay(500);
     // Start advertising
     // Bluefruit.Advertising.start(0);
@@ -428,6 +432,7 @@ void playGame() {
 
     // BLE control
     resp = playGameBleControl();
+    blesv_user_notify.notify8(0);  // Reset LIFF state
 
     playingTime.stop();
     g_playing_time = 0;
@@ -446,20 +451,23 @@ void playGame() {
         return;
     } else if (resp == -2) {
         debugPrint("[INFO]Player timeout.");
-        return;
     }
 
     // Drop toy
     arm_z_pos_drop_and_reset();
 
-    // Reset position
+    // Crane machine reset
     digitalWrite(IO_ARM_POWER, 0);
     delay(500);
     digitalWrite(IO_ARM_POWER, 1);
     delay(500);
 
     // Auotmation Close
-    debugPrint("[INFO]Automation Close.");
+    BLEConnection *connection = Bluefruit.Connection(last_connect_hdl);
+    if (connection->connected() == true) {
+        connection->disconnect();
+    }
+    debugPrint("[INFO]Disconnect to central automatic.");
 }
 
 int playGameBleControl() {
@@ -470,6 +478,12 @@ int playGameBleControl() {
         // Player disconnect
         if (!Bluefruit.connected()) {
             return -1;
+        }
+        // Time out
+        if (g_write_action.changed &&
+            g_write_action.action == DEVICE_CMD_LIFF_TIMEOUT &&
+            g_write_action.value == 1) {
+            return -2;
         }
     }
 
@@ -487,6 +501,12 @@ int playGameBleControl() {
         if (!Bluefruit.connected()) {
             return -1;
         }
+        // Time out
+        if (g_write_action.changed &&
+            g_write_action.action == DEVICE_CMD_LIFF_TIMEOUT &&
+            g_write_action.value == 1) {
+            return -2;
+        }
     }
 
     arm_x_control(ARM_X_DIR_RIGHT, 0);
@@ -502,6 +522,12 @@ int playGameBleControl() {
         // Player disconnect
         if (!Bluefruit.connected()) {
             return -1;
+        }
+        // Time out
+        if (g_write_action.changed &&
+            g_write_action.action == DEVICE_CMD_LIFF_TIMEOUT &&
+            g_write_action.value == 1) {
+            return -2;
         }
     }
 
@@ -519,6 +545,12 @@ int playGameBleControl() {
         // Player disconnect
         if (!Bluefruit.connected()) {
             return -1;
+        }
+        // Time out
+        if (g_write_action.changed &&
+            g_write_action.action == DEVICE_CMD_LIFF_TIMEOUT &&
+            g_write_action.value == 1) {
+            return -2;
         }
     }
     arm_y_control(ARM_Y_DIR_BACK, 0);
