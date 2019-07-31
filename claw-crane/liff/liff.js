@@ -15,6 +15,7 @@ const connectingUUIDSet = new Set();
 let logNumber = 1;
 let armState = 0;
 let coinInserted = 0;
+let finished = 0;
 
 function onScreenLog(text) {
   const logbox = document.getElementById('logbox');
@@ -114,6 +115,7 @@ function connectDevice(device) {
   onScreenLog('Device selected: ' + device.name);
   armState = 0;
   coinInserted = 0;
+  finished = 0;
 
   if (!device) {
     onScreenLog('No devices found. You must request a device first.');
@@ -175,32 +177,48 @@ function initializeCardForDevice(device) {
     device.gatt.disconnect();
   });
 
-  template.querySelector('.button1').addEventListener('mouseup', () => {
+
+  template.querySelector('.button1').addEventListener('touchstart', () => {
     if (coinInserted == 1) {
       if (armState == 0) {
         updateArm(device, DEVICE_CMD_ARM_X, 1).catch(e => onScreenLog(`ERROR on updateArm(): ${e}\n${e.stack}`));
-      } else if (armState == 1) {
+        armState++;
+      }
+    }
+  });
+
+  template.querySelector('.button1').addEventListener('touchend', () => {
+    if (coinInserted == 1) {
+      if (armState == 1) {
         updateArm(device, DEVICE_CMD_ARM_X, 0).catch(e => onScreenLog(`ERROR on updateArm(): ${e}\n${e.stack}`));
         getDeviceButton1(device).classList.remove('btn-primary');
         getDeviceButton1(device).classList.add('btn-secondary');
         getDeviceButton2(device).classList.remove('btn-secondary');
         getDeviceButton2(device).classList.add('btn-primary');
-        getDeviceMachineStatus(device).innerText = "2ボタンを押して右にスライドします。もう一度押すと停止します。";
+        getDeviceMachineStatus(device).innerText = "2ボタンを長押しして奥にスライドします。離すと止まります。";
+        armState++;
       }
-      armState++;
     }
   });
-  template.querySelector('.button2').addEventListener('mouseup', () => {
+
+  template.querySelector('.button2').addEventListener('touchstart', () => {
     if (coinInserted == 1) {
       if (armState == 2) {
         updateArm(device, DEVICE_CMD_ARM_Y, 1).catch(e => onScreenLog(`ERROR on updateArm(): ${e}\n${e.stack}`));
         armState++;
-      } else {
+      }
+    }
+  });
+
+  template.querySelector('.button2').addEventListener('touchend', () => {
+    if (coinInserted == 1) {
+      if (armState == 3) {
         updateArm(device, DEVICE_CMD_ARM_Y, 0).catch(e => onScreenLog(`ERROR on updateArm(): ${e}\n${e.stack}`));
         getDeviceButton2(device).classList.remove('btn-primary');
         getDeviceButton2(device).classList.add('btn-secondary');
         getDeviceMachineStatus(device).innerText = "ありがとうございました! 自動的に接続が切れます。";
         armState = 0;
+        finished = 1;
       }
     }
   });
@@ -286,12 +304,16 @@ function startTimeoutTimer(device) {
   timeoutTimer = setInterval(function() {
     remainingTime--;
     onScreenLog("remaining time = " + remainingTime);
-    if (remainingTime < 11) {
-      getDeviceRemainingTime(device).style.color = "red";
+    if (finished != 1) {
+      if (remainingTime < 11) {
+        getDeviceRemainingTime(device).style.color = "red";
+      } else {
+        getDeviceRemainingTime(device).style.color = "black";
+      }
+      getDeviceRemainingTime(device).innerText = "残り時間 : " + remainingTime;
     } else {
-      getDeviceRemainingTime(device).style.color = "black";
+      getDeviceRemainingTime(device).innerText = "";
     }
-    getDeviceRemainingTime(device).innerText = "残り時間 : " + remainingTime;
     if (remainingTime == 0) {
       clearInterval(timeoutTimer);
       getDeviceButton1(device).classList.remove('btn-primary');
@@ -311,7 +333,7 @@ async function valueUpdateToGui(device, value) {
   if (value == 2) { //対象者のコインを入れたときにこれが来る。
     getDeviceButton1(device).classList.remove('btn-secondary');
     getDeviceButton1(device).classList.add('btn-primary');
-    getDeviceMachineStatus(device).innerText = "コインが挿入されました。1ボタンを押して右にスライドします。もう一度押すと止まります。";
+    getDeviceMachineStatus(device).innerText = "コインが挿入されました。1ボタンを長押しして右にスライドします。離すと止まります。";
     getDeviceButton2(device).classList.remove('btn-primary');
     getDeviceButton2(device).classList.add('btn-secondary');
     coinInserted = 1;

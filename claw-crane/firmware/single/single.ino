@@ -410,6 +410,13 @@ bool checkOverPlayingTime() {
 
 void playGame() {
     int resp = 0;
+
+    // Crane machine reset
+    digitalWrite(IO_ARM_POWER, 0);
+    delay(500);
+    digitalWrite(IO_ARM_POWER, 1);
+    delay(500);
+
     // Notify coin insert information
     blesv_user_notify.notify8(NOTIFY_REQ_INSERT_COIN);
 
