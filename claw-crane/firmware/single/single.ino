@@ -358,8 +358,8 @@ void arm_z_control(int dir, bool ena) {
     digitalWrite(IO_RELAY3_COM, ena);
 }
 
-#define NOTIFY_READY 0
-#define NOTIFY_REQ_INSERT_COIN 4
+#define NOTIFY_REQ_INSERT_COIN 1
+#define NOTIFY_READY 2
 
 void loop() {
     char player_name[32] = {0};
@@ -381,6 +381,8 @@ void loop() {
     debugPrint(msg);
 
     // ゲームを始める
+    blesv_user_notify.notify8(0);  // Reset
+    delay(1000);
     digitalWrite(IO_SYSTEM_READY, 0);
     playGame();
 

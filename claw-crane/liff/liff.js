@@ -282,16 +282,18 @@ async function readStatusValue(device) {
 }
 
 async function valueUpdateToGui(device, value) {
-  if (value == 0) { //対象者の順番が来て、コインを入れたときにこれが来る。
+  if (value == 2) { //対象者のコインを入れたときにこれが来る。
     getDeviceButton1(device).classList.remove('btn-secondary');
     getDeviceButton1(device).classList.add('btn-primary');
     getDeviceMachineStatus(device).innerText = "コインが挿入されました。1ボタンを押して右にスライドします。もう一度押すと止まります。";
     getDeviceButton2(device).classList.remove('btn-primary');
     getDeviceButton2(device).classList.add('btn-secondary');
     coinInserted = 1;
+    /*
   } else if (value > 0 && value < 4) { // 待ち行列に並んでいるとき。
     getDeviceMachineStatus(device).innerText = "あと" + String(value) + "人が待っています。しばらくお待ち下さい。";
-  } else if (value == 4) { // 対象者の順番が来て、コインを入れる準備ができたときにこれが来る。
+    */
+  } else if (value == 1) { // 対象者の順番が来て、コインを入れる準備ができたときにこれが来る。
     getDeviceMachineStatus(device).innerText = "順番が来ました。マシーンにコインを入れてください。";
   }
 }
