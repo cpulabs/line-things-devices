@@ -67,7 +67,7 @@ void coinDetectEvent() {
 /*********************************************************************************
 BLE settings
 *********************************************************************************/
-#define USER_SERVICE_UUID "26643bd9-6c7b-4304-874a-e43f1eccafb5"
+#define USER_SERVICE_UUID "9b468a8f-d18b-45a7-b0a5-d48cb3c1004f"
 #define USER_CHARACTERISTIC_WRITE_UUID "e7024f7b-c61b-46bb-8690-e24c743e9b52"
 #define USER_CHARACTERISTIC_NOTIFY_UUID "82d23d9a-91b9-4933-96b0-966a148e9a43"
 #define PSDI_SERVICE_UUID "e625601e-9e55-4597-a598-76018a0d293d"

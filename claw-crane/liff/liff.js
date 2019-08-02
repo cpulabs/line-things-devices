@@ -1,6 +1,6 @@
 //https://cpulabs.github.io/line-things-devices/claw-crane/liff/
 
-const SERVICE_UUID = "26643bd9-6c7b-4304-874a-e43f1eccafb5";
+const SERVICE_UUID = "9b468a8f-d18b-45a7-b0a5-d48cb3c1004f";
 const CHARACTERISTIC_WRITE_UUID = "e7024f7b-c61b-46bb-8690-e24c743e9b52";
 const CHARACTERISTIC_NOTIFY_UUID = "82d23d9a-91b9-4933-96b0-966a148e9a43";
 
