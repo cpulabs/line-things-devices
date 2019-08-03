@@ -408,6 +408,13 @@ bool checkOverPlayingTime() {
     return false;
 }
 
+char serialControl() {
+    if (!Serial.available()) {
+        return 0;
+    }
+    return Serial.read();
+}
+
 void playGame() {
     int resp = 0;
 
@@ -425,6 +432,10 @@ void playGame() {
         delay(5);
         if (!Bluefruit.connected()) {
             debugPrint("[INFO]Player disconnect.");
+            return;
+        }
+        if (serialControl() == 'r') {
+            debugPrint("[INFO]Forced disconnect. (UART control)");
             return;
         }
     }
