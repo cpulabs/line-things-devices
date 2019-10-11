@@ -24,10 +24,16 @@ LIFF / 自動通信と組み合わせて何時ころ洗濯物が乾くか、乾�
 #### Settings characteristic
 Write
 
+
 デバイスの設定と開始などを行う。
 
-|[1Byte]CMD|
+| Format|
+----
+| [1Byte]CMD |
 
+
+| CMD | function |
+----|----
 |CMD == 0|Reset device|
 |CMD == 1|Set dry temp / humidity to device(EEPROMにも書き込まれるため、Reset後も保持)|
 |CMD == 2|Start|
@@ -36,8 +42,12 @@ Write
 #### Status characteristic
 Read
 
-|[1Byte]:Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [1Byte]Battery level, [4Byte]reserved|
+| Format|
+----
+|[1Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [1Byte]Battery level, [4Byte]reserved|
 
+| Type | function |
+----|----
 |Status|0:Idle, 1:Working|
 |Predict Time|Status==1のときに有効。予測時間(単位minute)|
 |Dry temp|服がかかっていないときの気温(100倍する必要あり)|
@@ -54,8 +64,12 @@ Read / Notify
 
 バッテリが10%以下、または服が乾いた(Status==1) + Connectionが有効なときに、一度だけNotifyする。
 
+| Format|
+----
 |[1Byte]Battery Status, [1Byte]Clothes Status|
 
+| Type | function |
+----|----
 |Battery Status|バッテリが10%以下になったら1を通知。それ以外は0|
 |Clothes Status|服が乾いたら1を通知。それ以外は0|
 
