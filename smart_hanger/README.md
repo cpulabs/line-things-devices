@@ -28,7 +28,7 @@ Write
 デバイスの設定と開始などを行う。
 
 | Format|
-----
+|----|
 | [1Byte]CMD |
 
 
@@ -43,7 +43,7 @@ Write
 Read
 
 | Format|
-----
+|----|
 |[1Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [1Byte]Battery level, [4Byte]reserved|
 
 | Type | function |
@@ -65,7 +65,7 @@ Read / Notify
 バッテリが10%以下、または服が乾いた(Status==1) + Connectionが有効なときに、一度だけNotifyする。
 
 | Format|
-----
+|----|
 |[1Byte]Battery Status, [1Byte]Clothes Status|
 
 | Type | function |
