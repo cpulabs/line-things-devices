@@ -297,7 +297,7 @@ async function readStatus(device) {
     onScreenLog("wrote data");
 
     let status = buffer.getInt16(0, true);
-    const predict_time = buffer.getInt16(2, true);
+    const predict_time = buffer.getUint16(2, true);
     const dry_temp = buffer.getInt16(4, true) / 100;
     const dry_humidity = buffer.getInt16(6, true) / 100;
     const current_temp = buffer.getInt16(8, true) / 100;
@@ -322,7 +322,7 @@ async function readStatus(device) {
     getDeviceViewHumidity(device).innerText = current_humidity + " %";
     getDeviceViewPressure(device).innerText = "not support";
     getDeviceViewStatus(device).innerText = status;
-    getDeviceViewPredictTime(device).innerText = predict_time / 60 + " minute";
+    getDeviceViewPredictTime(device).innerText = predict_time + " minute";
     getDeviceViewAltitude(device).innerText = "not support";
     getDeviceViewLastUpdate(device).innerText = time.getHours() + "時" + time.getMinutes() + "分" + time.getSeconds() + "秒";
     onScreenLog("read data : ok");

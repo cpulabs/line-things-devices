@@ -43,7 +43,7 @@ Read
 
 | Format|
 |----|
-|[1Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [1Byte]Battery level, [4Byte]reserved|
+|[2Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [2Byte]Battery level, [2Byte]reserved|
 
 | Type | function |
 ----|----

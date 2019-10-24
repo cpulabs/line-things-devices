@@ -424,7 +424,7 @@ unsigned int predict(unsigned long time, unsigned int progress){
       debugPrint("Progress report[TIME]");
       debugPrint("Can not guess time");
       debugPrint("-----------------------------");
-      return 65536;
+      return 65535;
     }
     double progress_1sec = ((double)progress / time);
     double predect_time = (100 - progress) / progress_1sec;
@@ -438,7 +438,7 @@ unsigned int predict(unsigned long time, unsigned int progress){
     debugPrint("-----------------------------");
 
     if(predect_time >= 65535){
-        return 65536;
+        return 65535;
     }
     return (unsigned int)predect_time;
 }
@@ -563,11 +563,12 @@ void user_loop(dryValue profile) {
                 if(spend_time > PREDICT_START_TIME){
                   Serial.println("PROGRESS : " + String(progress));
                   predict_time = predict(spend_time, progress);
+                  Serial.println("PROGRESS[TIME] : " + String(predict_time));
                 }
 
                 // Transmit via BLE
                 tx_frame[0] = 1;
-                tx_frame[1] = predict_time;
+                tx_frame[1] = predict_time / 60; //change to minute
                 blesv_user_read.write((uint8_t *) tx_frame,
                                              sizeof(tx_frame));
 
