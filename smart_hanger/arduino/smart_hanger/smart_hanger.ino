@@ -484,6 +484,7 @@ void user_loop(dryValue profile) {
     unsigned int progress;
     unsigned int predict_time = 0;
     bool dry_status;
+    
 
     while (1) {
         if(g_ble_cmd_req_reset){
