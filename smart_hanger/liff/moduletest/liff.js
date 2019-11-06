@@ -86,7 +86,6 @@ async function findDevice() {
 function addDeviceToList(device) {
   onScreenLog('Device found: ' + device.name);
 
-
   const deviceList = document.getElementById('device-list');
   const deviceItem = document.getElementById('device-list-item').cloneNode(true);
   deviceItem.setAttribute('id', device.id);
@@ -94,17 +93,15 @@ function addDeviceToList(device) {
   deviceItem.querySelector(".device-name").innerText = device.name;
   deviceItem.querySelector(".rssi").innerText = device.rssi;
   deviceItem.classList.add("d-flex");
+  deviceItem.addEventListener('click', () => {
+    deviceItem.classList.add("active");
+    try {
+      connectDevice(device);
+    } catch (e) {
+      onScreenLog('Initializing device failed. ' + e);
+    }
+  });
   deviceList.appendChild(deviceItem);
-  deviceItem.classList.add("active");
-
-
-  try {
-    connectDevice(device);
-  } catch (e) {
-    onScreenLog('Initializing device failed. ' + e);
-  }
-
-
 }
 
 // Select target device and connect it
@@ -133,7 +130,6 @@ function connectDevice(device) {
 
       toggleNotification(device).catch(e => onScreenLog(`ERROR on toggleNotification(): ${e}\n${e.stack}`));
       //updateSettings(device);
-      readStatus(device);
 
     }).catch(e => {
       flashSDKError(e);
@@ -151,7 +147,7 @@ function initializeCardForDevice(device) {
 
   template.style.display = 'block';
   template.setAttribute('id', cardId);
-  template.querySelector('.card > .card-header > .device-name').innerText = "Hanger device"; //device.id; //device.name;
+  template.querySelector('.card > .card-header > .device-name').innerText = device.name;
 
   // Device disconnect button
   template.querySelector('.device-disconnect').addEventListener('click', () => {
@@ -164,30 +160,17 @@ function initializeCardForDevice(device) {
     readStatus(device).catch(e => onScreenLog(`ERROR on readStatus(): ${e}\n${e.stack}`));
   });
 
-  /*
   template.querySelector('.start-button').addEventListener('click', () => {
     writeCommand(device, SET_CMD_START).catch(e => onScreenLog(`ERROR on writeCommand(): ${e}\n${e.stack}`));
     resetDisplay(device);
     //readStatus(device).catch(e => onScreenLog(`ERROR on readStatus(): ${e}\n${e.stack}`));
-    getDeviceViewStatus(device).innerText = "計測中です";
+    getDeviceViewStatus(device).innerText = "WORK";
   });
-  */
 
   template.querySelector('.system-reset-button').addEventListener('click', () => {
     writeCommand(device, SET_CMD_RESET).catch(e => onScreenLog(`ERROR on writeCommand(): ${e}\n${e.stack}`));
     resetDisplay(device);
     readStatus(device).catch(e => onScreenLog(`ERROR on readStatus(): ${e}\n${e.stack}`));
-  });
-
-  template.querySelector('.set-device-id-button').addEventListener('click', () => {
-    const card = getDeviceCard(device);
-    const userDeviceId = Number(card.querySelector('.edit-device-id-textbox').value);
-    onScreenLog('Change user device id to :' + userDeviceId);
-
-    writeCommand(device, userDeviceId + 4).catch(e => onScreenLog(`ERROR on writeCommand(): ${e}\n${e.stack}`));
-    resetDisplay(device);
-    readStatus(device).catch(e => onScreenLog(`ERROR on readStatus(): ${e}\n${e.stack}`));
-    //getDeviceSetDeviceName(device).innerText = "Hanger device (ID : " + userDeviceId + ")";
   });
 
   template.querySelector('.read-status-button').addEventListener('click', () => {
@@ -313,47 +296,35 @@ async function readStatus(device) {
   if (buffer != null) {
     onScreenLog("wrote data");
 
-    const status_raw = buffer.getInt16(0, true);
+    let status = buffer.getInt16(0, true);
     const predict_time = buffer.getUint16(2, true);
     const dry_temp = buffer.getInt16(4, true) / 100;
     const dry_humidity = buffer.getInt16(6, true) / 100;
     const current_temp = buffer.getInt16(8, true) / 100;
     const current_humidity = buffer.getInt16(10, true) / 100;
     const battery = buffer.getInt16(12, true);
-    const device_id = buffer.getInt16(14, true);
     const time = new Date();
 
-    let status
-    if (status_raw == 0) {
-      status = "";
-    } else if (status_raw == 1) {
-      status = "計測中です";
-    } else if (status_raw == 2) {
-      status = "服が乾きました";
+    if (status == 0) {
+      status = "IDLE";
+    } else if (status == 1) {
+      status = "WORK";
+    } else if (status == 2) {
+      status = "DONE";
     } else {
       status = "error";
     }
 
     getDeviceViewTemperature(device).innerText = current_temp + " ℃";
-    //getDeviceViewDryTemperature(device).innerText = dry_temp + " ℃";
-    //getDeviceViewDryHumidity(device).innerText = dry_humidity + " %";
+    getDeviceViewDryTemperature(device).innerText = dry_temp + " ℃";
+    getDeviceViewDryHumidity(device).innerText = dry_humidity + " %";
     getDeviceViewBattery(device).innerText = battery + " %";
     getDeviceViewHumidity(device).innerText = current_humidity + " %";
+    getDeviceViewPressure(device).innerText = "not support";
     getDeviceViewStatus(device).innerText = status;
-
-    if (status_raw == 1) {
-      if (predict_time < 60) {
-        getDeviceViewPredictTime(device).innerText = predict_time + " min";
-      } else {
-        getDeviceViewPredictTime(device).innerText = Math.floor(predict_time / 60) + "時間" + predict_time % 60 + "分";
-      }
-    } else {
-      getDeviceViewPredictTime(device).innerText = "---";
-    }
-
-    //getDeviceViewAltitude(device).innerText = "not support";
+    getDeviceViewPredictTime(device).innerText = predict_time + " minute";
+    getDeviceViewAltitude(device).innerText = "not support";
     getDeviceViewLastUpdate(device).innerText = time.getHours() + "時" + time.getMinutes() + "分" + time.getSeconds() + "秒";
-    getDeviceSetDeviceName(device).innerText = "Hanger device (ID : " + device_id + ")";
     onScreenLog("read data : ok");
   } else {
     onScreenLog("read data is null");
@@ -364,19 +335,19 @@ function resetDisplay(device) {
   getDeviceViewTemperature(device).innerText = "";
   getDeviceViewBattery(device).innerText = "";
   getDeviceViewHumidity(device).innerText = "";
+  getDeviceViewPressure(device).innerText = "";
   getDeviceViewStatus(device).innerText = "";
   getDeviceViewPredictTime(device).innerText = "";
-  //getDeviceViewAltitude(device).innerText = "";
+  getDeviceViewAltitude(device).innerText = "";
   getDeviceViewLastUpdate(device).innerText = "";
-  //getDeviceViewDryHumidity(device).innerText = "";
-  //getDeviceViewDryTemperature(device).innerText = "";
+  getDeviceViewDryHumidity(device).innerText = "";
+  getDeviceViewDryTemperature(device).innerText = "";
 
 }
 
 function updateStatus(device, buffer) {
-  const device_id = buffer.getInt8(0);
-  const battery = buffer.getInt8(1);
-  const dryStatus = buffer.getInt8(2);
+  const battery = buffer.getInt8(0);
+  const dryStatus = buffer.getInt8(1);
   const time = new Date();
 
   let tmp = (battery == 1) ? "バッテリーが20%以下です。" : "";
@@ -384,7 +355,6 @@ function updateStatus(device, buffer) {
 
   getDeviceViewStatus(device).innerText = tmp;
   getDeviceViewLastUpdate(device).innerText = time.getHours() + "時" + time.getMinutes() + "分" + time.getSeconds() + "秒";
-  getDeviceSetDeviceName(device).innerText = "Hanger device (ID : " + device_id + ")";
 }
 
 async function readCharacteristic(characteristic) {
@@ -439,6 +409,9 @@ function getDeviceViewBattery(device) {
   return getDeviceCard(device).getElementsByClassName('progress-bar-battery')[0];
 }
 
+function getDeviceViewDryTemperature(device) {
+  return getDeviceCard(device).getElementsByClassName('progress-bar-dry-temperature')[0];
+}
 
 function getDeviceViewDryHumidity(device) {
   return getDeviceCard(device).getElementsByClassName('progress-bar-dry-humidity')[0];
@@ -467,15 +440,6 @@ function getDeviceViewAltitude(device) {
 function getDeviceViewLastUpdate(device) {
   return getDeviceCard(device).getElementsByClassName('progress-bar-lastupdate')[0];
 }
-
-function getDeviceSetDeviceUserId(device) {
-  return getDeviceCard(device).getElementsByClassName('edit-device-id-textbox')[0];
-}
-
-function getDeviceSetDeviceName(device) {
-  return getDeviceCard(device).getElementsByClassName('device-name')[0];
-}
-
 
 
 function renderVersionField() {

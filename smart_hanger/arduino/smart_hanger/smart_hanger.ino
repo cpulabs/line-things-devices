@@ -27,6 +27,7 @@ typedef struct dry_profile {
     float temp;
     float humidity;
     int pressure;
+    int device_id;
 } dryValue;
 
 typedef struct sensor_value {
@@ -81,7 +82,7 @@ void profileFileWrite(dryValue profile) {
     if (file.open(FILENAME, FILE_O_WRITE)) {
         file.seek(0);
         int16_t configdata[4] = {profile.temp,     profile.humidity,
-                                 profile.pressure, 0};
+                                 profile.pressure, profile.device_id};
         file.write((uint8_t *) configdata, sizeof(configdata));
         file.close();
         debugPrint("[Flash] Write profile file : done");
@@ -99,6 +100,7 @@ void profileFileRead(dryValue *profile) {
     profile->temp = configdata[0];
     profile->humidity = configdata[1];
     profile->pressure = configdata[2];
+    profile->device_id = configdata[3];
 }
 
 int profileFileExist() {
@@ -216,7 +218,7 @@ void bleServiceUser_setup() {
 
     blesv_user_notify.setProperties(CHR_PROPS_NOTIFY | CHR_PROPS_READ);
     blesv_user_notify.setPermission(SECMODE_ENC_NO_MITM, SECMODE_ENC_NO_MITM);
-    blesv_user_notify.setFixedLen(2);
+    blesv_user_notify.setFixedLen(3);
     blesv_user_notify.begin();
 
     blesv_user_read.setProperties(CHR_PROPS_READ);
@@ -284,6 +286,9 @@ void event_ble_disconnect(uint16_t conn_handle, uint8_t reason) {
 volatile bool g_ble_cmd_req_reset = false;
 volatile bool g_ble_cmd_req_setconfig = false;
 volatile bool g_ble_cmd_req_start = false;
+volatile bool g_ble_cmd_change_device_id = false;
+volatile int g_ble_request_device_id = 0;
+
 
 void event_ble_write(uint16_t conn_handle, BLECharacteristic *chr,
                      uint8_t *data, uint16_t len) {
@@ -298,7 +303,13 @@ void event_ble_write(uint16_t conn_handle, BLECharacteristic *chr,
           g_ble_cmd_req_start = true;
           break;
       default:
-        debugPrint("[BLE]request command failed.");
+        if(data[0] >= 4 && data[0] < 132){
+          debugPrint("[BLE]Change device ID.");
+          g_ble_cmd_change_device_id = true;
+          g_ble_request_device_id = data[0] - 4;
+        }else{
+          debugPrint("[BLE]request command failed.");
+        }
         break;
     }
 }
@@ -380,13 +391,15 @@ void setup() {
         profile.temp = 0;
         profile.humidity = 0;
         profile.pressure = 0;
+        profile.device_id = 0;
         profileFileWrite(profile);
     } else {
         profileFileRead(&profile);
     }
 
     debugPrint("-----------------------------");
-    debugPrint("Show dry parameter");
+    debugPrint("Show parameter");
+    debugPrint("User device id : " + String(profile.device_id));
     debugPrint("Temp : " + String(profile.temp) + "");
     debugPrint("Humidity : " + String(profile.humidity) + "%");
     debugPrint("Pressure : " + String(profile.pressure) + "hPa");
@@ -443,6 +456,13 @@ unsigned int predict(unsigned long time, unsigned int progress){
     return (unsigned int)predect_time;
 }
 
+bool wetClothesAutoDetect(dryValue profile, sensorValue value){
+  float offset = 18;
+  if((profile.humidity + offset) < value.humidity){
+    return true;
+  }
+  return false;
+}
 
 void user_loop(dryValue profile) {
     sensorValue value_now;
@@ -457,6 +477,9 @@ void user_loop(dryValue profile) {
     unsigned long spend_time;
 
     bool notify_request = false;
+    bool id_changed = false;
+    bool system_reset = false;
+    bool autoDetect = false;
 
     unsigned int progress;
     unsigned int predict_time = 0;
@@ -467,6 +490,28 @@ void user_loop(dryValue profile) {
             debugPrint("[Status changed]System Reset");
             g_ble_cmd_req_reset = false;
             state = STT_IDLE;
+            system_reset = true;
+        }
+
+        // Change device id
+        if(g_ble_cmd_change_device_id){
+          g_ble_cmd_change_device_id = false;
+          id_changed = true;
+          profile.device_id = g_ble_request_device_id;
+          profile.temp = profile.temp;
+          profile.pressure = profile.pressure;
+          profile.humidity = profile.humidity;
+          profileFileWrite(profile);
+          //Read Profile
+          dryValue tmp;
+          profileFileRead(&tmp);
+          debugPrint("-----------------------------");
+          debugPrint("Load parameter");
+          debugPrint("User device id : " + String(profile.device_id));
+          debugPrint("Temp : " + String(tmp.temp) + "");
+          debugPrint("Humidity : " + String(tmp.humidity) + "%");
+          debugPrint("Pressure : " + String(tmp.pressure) + "hPa");
+          debugPrint("-----------------------------");
         }
 
         // Senser Read
@@ -494,23 +539,25 @@ void user_loop(dryValue profile) {
         tx_frame[4] = value_now.temp * 100;
         tx_frame[5] = value_now.humidity * 100;
         tx_frame[6] = value_now.battery;
-        tx_frame[7] = 0;
+        tx_frame[7] = profile.device_id;
 
         // Spend time
         spend_time = (millis() / 1000) - start_time;
 
         // Notify
-        if(notify_request || value_now.battery <= 10){
-            uint8_t notify_data[2];
-
-            notify_data[0] = (value_now.battery <= 10)? 1 : 0;
-            notify_data[1] = (notify_request)? 1 : 0;
+        if(notify_request || value_now.battery <= 10 || id_changed || system_reset){
+            uint8_t notify_data[3];
+            notify_data[0] = profile.device_id;
+            notify_data[1] = (value_now.battery <= 10)? 1 : 0;
+            notify_data[2] = (notify_request)? 1 : 0;
 
             for (uint8_t conn_hdl = 0;
                 conn_hdl < BLE_MAX_PRPH_CONNECTION; conn_hdl++) {
-                blesv_user_notify.notify(conn_hdl, (uint8_t *) notify_data, 2);
+                blesv_user_notify.notify(conn_hdl, (uint8_t *) notify_data, 3);
             }
             notify_request = false;
+            id_changed = false;
+            system_reset = false;
         }
 
         switch(state){
@@ -523,6 +570,7 @@ void user_loop(dryValue profile) {
                 // Request set dry profile
                 if(g_ble_cmd_req_setconfig){
                     g_ble_cmd_req_setconfig = false;
+                    profile.device_id = profile.device_id;
                     profile.temp = value_now.temp;
                     profile.pressure = value_now.pressure;
                     profile.humidity = value_now.humidity;
@@ -531,7 +579,8 @@ void user_loop(dryValue profile) {
                     dryValue tmp;
                     profileFileRead(&tmp);
                     debugPrint("-----------------------------");
-                    debugPrint("Load dry value");
+                    debugPrint("Load parameter");
+                    debugPrint("User device id : " + String(profile.device_id));
                     debugPrint("Temp : " + String(tmp.temp) + "");
                     debugPrint("Humidity : " + String(tmp.humidity) + "%");
                     debugPrint("Pressure : " + String(tmp.pressure) + "hPa");
@@ -539,13 +588,27 @@ void user_loop(dryValue profile) {
                 }
 
                 // request start
-                if(g_ble_cmd_req_start || g_start_from_switch){
+                autoDetect = wetClothesAutoDetect(profile, value_now);
+                if(autoDetect){
+                  Serial.println("Wet clothes auto detected.");
+                  Serial.println("Start...");
+                }
+                if(g_ble_cmd_req_start || g_start_from_switch || autoDetect){
+                    // Transmit via BLE
+                    tx_frame[0] = 1;
+                    tx_frame[1] = 65535 / 60; //change to minute
+                    blesv_user_read.write((uint8_t *) tx_frame,
+                                                 sizeof(tx_frame));
+
                     g_ble_cmd_req_start = false;
                     g_start_from_switch = false;
                     debugPrint("[Status changed]IDLE to WORKING");
                     start_time = millis() / 1000;
                     value_start = value_now;
-                    delay(5000);
+                    for(int i = 0; i < 10; i++){
+                      delay(6000);
+                    }
+                    debugPrint("Start");
                     state = STT_WORKING;
                 }
 
@@ -580,11 +643,13 @@ void user_loop(dryValue profile) {
                                                  sizeof(tx_frame));
                     state = STT_DONE;
                     debugPrint("[Status changed]WORKING to DONE");
+                    /*
                     debugPrint("Set new dry parameter");
                     profile.temp = value_now.temp;
                     profile.pressure = value_now.pressure;
                     profile.humidity = value_now.humidity;
                     profileFileWrite(profile);
+                    */
                 }
 
                 delay(5000);

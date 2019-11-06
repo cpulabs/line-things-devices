@@ -16,9 +16,6 @@
       <i class="fas fa-exclamation-triangle"></i> BLE feature is not available.
     </div>
   </div>
-
-
-
   <div class="mb-2">
     <div id="device-list" class="list-group">
       <button type="button" class="list-group-item disabled font-weight-bold">
@@ -35,9 +32,7 @@
       </button>
     </div>
   </div>
-
-
-  <div id="device-cards" class="card">
+  <div id="device-cards" class="">
     <div id="device-template" class="my-2" style="display:none;">
       <div class="card">
         <div class="card-header d-flex align-items-center justify-content-between py-2">
@@ -60,79 +55,107 @@
           <div class="tab-content row my-2">
             <div class="tab-pane fade col show active" id="nav-notify" role="tabpanel" aria-labelledby="nav-notify-tab">
 
+              <div class="card-body text-center">
+                <button type="button" class="start-button btn btn-primary"><i class="fas fa-refresh"></i> Start </button>
+              </div>
 
-              <div class="col pt-4">
-                <div class="text-center">
-                  <div style="color:red;" class="progress-bar-status">status</div>
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-battery-half"> ステータス</i>
+                </div>
+                <div class="progress-bar-status flex-grow-1 lead">
+                  ---
+                </div>
+              </div>
+
+              <div class="card-body text-center">
+                <button type="button" class="read-status-button btn btn-primary"><i class="fas fa-refresh"></i> Read Status </button>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas"> 更新時間</i>
+                </div>
+                <div class="progress-bar-lastupdate flex-grow-1 lead">
+                  ---
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-battery-half"> 電池</i>
+                </div>
+                <div class="progress-bar-battery flex-grow-1 lead">
+                  ---
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                  <div class="w-25">
+                    <i class="fas fa-tachometer-alt"> 予測時間</i>
+                  </div>
+                  <div class="progress-bar-predict-time flex-grow-1 lead">
+                    ---
+                  </div>
+              </div>
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-thermometer-half"> 現在の温度</i>
+                </div>
+                <div class="progress-bar-temperature flex-grow-1 lead">
+                  ---
+                </div>
+              </div><div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-tachometer-alt"> 現在の湿度</i>
+                </div>
+                <div class="progress-bar-humidity flex-grow-1 lead">
+                  ---
+                </div>
+              </div><div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-tachometer-alt"> 現在の気圧</i>
+                </div>
+                <div class="progress-bar-pressure flex-grow-1 lead">
+                  ---
+                </div>
+              </div>
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-tachometer-alt"> 現在の標高</i>
+                </div>
+                <div class="progress-bar-altitude flex-grow-1 lead">
+                  ---
                 </div>
               </div>
 
 
-            <div class="row align-items-start">
-              <div class="col pt-4">
-                <div class="text-center">
-                  <span class="col-title"><i class="fa fa-tshirt text-white"></i> 乾くまで</span>
-                  <p class="col-body progress-bar-predict-time">12:06:31</p>
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-tachometer-alt"> 乾燥状態の温度</i>
+                </div>
+                <div class="progress-bar-dry-temperature flex-grow-1 lead">
+                  ---
                 </div>
               </div>
-              <div class="col pt-4">
-                <div class="text-center">
-                  <span class="col-title"><i class="fa fa-thermometer-quarter text-white"></i> 気温</span>
-                  <p class="col-body progress-bar-temperature">26.55℃</p>
+
+              <div class="d-flex align-items-center justify-content-between text-center mb-3">
+                <div class="w-25">
+                  <i class="fas fa-tachometer-alt"> 乾燥状態の湿度</i>
+                </div>
+                <div class="progress-bar-dry-humidity flex-grow-1 lead">
+                  ---
                 </div>
               </div>
-            </div>
-            <div class="row align-items-center">
-              <div class="col pt-4">
-                <div class="text-center">
-                  <span class="col-title"><i class="fa fa-tint text-white"></i> 湿度</span>
-                  <p class="col-body progress-bar-humidity">70.33%</p>
-                </div>
-              </div>
-              <div class="col pt-4">
-                <div class="text-center">
-                  <span class="col-title"><i class="fa fa-battery-full text-white"></i> 残電池</span>
-                  <p class="col-body progress-bar-battery">100%</p>
-                </div>
-              </div>
-            </div>
-    <!--
-            <div class="row align-items-end">
-              <div class="col-md-2 text-center">
-                <button type="button" class="btn btn-lg btn-primary w-100 my-1 start-button">Working</button>
-              </div>
-            </div>
-
-    -->
-            <div class="row align-items-end">
-              <div class="col-md-2 text-center">
-                <button type="button" class="btn btn-lg btn-primary w-100 my-1 read-status-button">Refresh</button>
-              </div>
-            </div>
-            <div class="row align-items-end mt-2">
-              <div class="col-md-2 text-center">
-                <span class="col-title">最終更新</span>
-                <p class="col-title progress-bar-lastupdate">12:12:12</p>
-              </div>
-            </div>
-
-
-
 
             </div>
 
 
             <div class="tab-pane fade col" id="nav-settings" role="tabpanel" aria-labelledby="nav-settings-tab">
               <div class="card-body text-center">
-                <p><button type="button" class="write-config-button btn btn-primary"><i class="fas fa-refresh"></i>Configure parameter</button><p/>
-                <br>
-                <p><button type="button" class="system-reset-button btn btn-primary"><i class="fas fa-refresh"></i> System reset </button><p/>
-                <br>
-                <p>
-                    <label for="uuid">Write user define device id</label>
-                    <input type="" class="form-control edit-device-id-textbox" id="edit-device-id-textbox" placeholder="0">
-                    <button type="button" class="set-device-id-button btn btn-primary"><i class="fas fa-refresh"></i>Write device ID</button>
-                </p>
+                <p><button type="button" class="write-config-button btn btn-primary"><i class="fas fa-refresh"></i> Read and set parameter</button><p/>
+
+                <p><button type="button" class="system-reset-button btn btn-primary"><i class="fas fa-refresh"></i> System Reset </button><p/>
               </div>
             </div>
 
@@ -168,15 +191,8 @@
           </div>
         </div>
       </div>
-    </p>
-      <hr color="#ffffff" width="100%" size="3">
-    <p>
     </div>
   </div>
-
-
-
-
 
   <div id="log-panel" class="collapse my-2">
     <textarea id="logbox" rows="24" class="card-body form-control input-sm text-monospace p-2" readonly></textarea>

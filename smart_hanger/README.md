@@ -36,6 +36,7 @@ Write
 |CMD == 0|Reset device|
 |CMD == 1|Set dry temp / humidity to device(EEPROMにも書き込まれるため、Reset後も保持)|
 |CMD == 2|Start|
+|CMD >= 4 & CMD < 132|user device idを設定。設定値-4舌値がdevice idとなる。ex) 4を設定するとdevice id = 0|
 
 
 #### Status characteristic
@@ -43,7 +44,7 @@ Read
 
 | Format|
 |----|
-|[2Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [2Byte]Battery level, [2Byte]reserved|
+|[2Byte]Status, [2Byte]Predict time, [2Byte]Dry-Temp, [2Byte]Dry-Humidity, [2Byte]Current-Temp, [2Byte]Current-Humidity, [2Byte]Battery level, [2Byte]User device id|
 
 | Type | function |
 ----|----
@@ -54,7 +55,7 @@ Read
 |Current temp|現在の気温(100倍する必要あり)|
 |Current humidity|現在の湿度(100倍する必要あり)|
 |Battery|バッテリ残量(1~100%)|
-|Reserved|将来拡張領域。0が帰る|
+|User device id|ユーザが指定したdevice idが帰る。設定していないと初期値0|
 
 
 
@@ -65,10 +66,11 @@ Read / Notify
 
 | Format|
 |----|
-|[1Byte]Battery Status, [1Byte]Clothes Status|
+|[1Byte]User device id, [1Byte]Battery Status, [1Byte]Clothes Status|
 
 | Type | function |
 ----|----
+|User devide id|ユーザが設定したデバイスごとの固有idが帰る|
 |Battery Status|バッテリが10%以下になったら1を通知。それ以外は0|
 |Clothes Status|服が乾いたら1を通知。それ以外は0|
 
