@@ -73,8 +73,10 @@ async function findDevice() {
       addDeviceToList(device);
     } else {
       // TODO: Maybe this is unofficial hack > device.rssi
-      document.querySelector(`#${device.id} .rssi`).innerText = device.rssi;
+      //document.querySelector(`#${device.id} .rssi`).innerText = device.rssi;
     }
+    //Try to connect
+    connectDevice(device);
 
     checkAvailablityAndDo(() => setTimeout(findDevice, 100));
   } catch (e) {
@@ -86,7 +88,7 @@ async function findDevice() {
 function addDeviceToList(device) {
   onScreenLog('Device found: ' + device.name);
 
-
+  /*
   const deviceList = document.getElementById('device-list');
   const deviceItem = document.getElementById('device-list-item').cloneNode(true);
   deviceItem.setAttribute('id', device.id);
@@ -94,8 +96,23 @@ function addDeviceToList(device) {
   deviceItem.querySelector(".device-name").innerText = device.name;
   deviceItem.querySelector(".rssi").innerText = device.rssi;
   deviceItem.classList.add("d-flex");
-  deviceList.appendChild(deviceItem);
+
   deviceItem.classList.add("active");
+  deviceList.appendChild(deviceItem);
+  */
+
+  /*
+  deviceItem.addEventListener('click', () => {
+    onScreenLog("TAP!!!!!!!!!!!");
+
+    try {
+      connectDevice(device);
+    } catch (e) {
+      onScreenLog('Initializing device failed. ' + e);
+    }
+
+  });
+  */
 
 
   try {
@@ -121,6 +138,7 @@ function connectDevice(device) {
 
     // Wait until the requestDevice call finishes before setting up the disconnect listner
     const disconnectCallback = () => {
+      onScreenLog('disconnected : debug');
       updateConnectionStatus(device, 'disconnected');
       device.removeEventListener('gattserverdisconnected', disconnectCallback);
     };
@@ -195,7 +213,20 @@ function initializeCardForDevice(device) {
   });
 
   // Tabs
+  /*
   ['notify', 'settings', 'info'].map(key => {
+    const tab = template.querySelector(`#nav-${key}-tab`);
+    const nav = template.querySelector(`#nav-${key}`);
+
+    tab.id = `nav-${key}-tab-${device.id}`;
+    nav.id = `nav-${key}-${device.id}`;
+
+    tab.href = '#' + nav.id;
+    tab['aria-controls'] = nav.id;
+    nav['aria-labelledby'] = tab.id;
+  })
+  */
+  ['notify', 'settings'].map(key => {
     const tab = template.querySelector(`#nav-${key}-tab`);
     const nav = template.querySelector(`#nav-${key}`);
 
