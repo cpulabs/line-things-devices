@@ -493,6 +493,23 @@ void user_loop(dryValue profile) {
     bool dry_status;
 
 
+    /*
+    Serial.println("Waiting for connect ");
+    while(!Bluefruit.connected());
+    Serial.println("Connected  ");
+    delay(5000);
+    uint8_t txd[3];
+    txd[0] = 1;
+    txd[1] = 1;
+    txd[2] = 1;
+
+    for (uint8_t conn_hdl = 0;
+        conn_hdl < BLE_MAX_PRPH_CONNECTION; conn_hdl++) {
+        blesv_user_notify.notify(conn_hdl, (uint8_t *) txd, 3);
+    }
+    Serial.println("Notify : done");
+    for(;;);
+    */
 
     // Senser Read
     if(digitalRead(IO_SW) == 0){

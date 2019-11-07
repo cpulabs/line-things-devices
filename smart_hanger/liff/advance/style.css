@@ -1,0 +1,16 @@
+.col-title {
+  font-size:12pt;
+  font-weight:bold;
+  color:#bbb;
+}
+
+.col-body {
+  font-size:21pt;
+  font-weight:bold;
+}
+
+p {
+  margin-bottom:0;
+  margin-top:0;
+  padding:0;
+}
