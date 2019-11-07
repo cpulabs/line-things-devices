@@ -120,6 +120,7 @@ function connectDevice(device) {
     const disconnectCallback = () => {
       updateConnectionStatus(device, 'disconnected');
       device.removeEventListener('gattserverdisconnected', disconnectCallback);
+      onScreenLog('disconnected -> debug!!!!!!');
     };
     device.addEventListener('gattserverdisconnected', disconnectCallback);
 

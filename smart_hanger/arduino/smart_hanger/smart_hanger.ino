@@ -346,6 +346,16 @@ Setup
 *********************************************************************************/
 void setup() {
     dryValue profile;
+    // Serial通信初期化
+    Serial.begin(115200);
+
+    // This is for Soft device bug
+    // https://github.com/adafruit/Adafruit_nRF52_Arduino/issues/222
+    /*
+    InternalFS.begin();
+    InternalFS.format();
+    Serial.println("Clear bonding data\n");
+    */
 
     // Pin config
     pinMode(IO_LED, OUTPUT);
@@ -354,9 +364,6 @@ void setup() {
 
     // Interrupt
     attachInterrupt(IO_SW, swChangedEvent, RISING);
-
-    // Serial通信初期化
-    Serial.begin(115200);
 
     // Enable low power feature
     sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
@@ -388,8 +395,8 @@ void setup() {
 
     // profile file
     if (profileFileExist() == -1) {
-        profile.temp = 0;
-        profile.humidity = 0;
+        profile.temp = 30;
+        profile.humidity = 40;
         profile.pressure = 0;
         profile.device_id = 0;
         profileFileWrite(profile);
@@ -484,7 +491,31 @@ void user_loop(dryValue profile) {
     unsigned int progress;
     unsigned int predict_time = 0;
     bool dry_status;
-    
+
+
+
+    // Senser Read
+    if(digitalRead(IO_SW) == 0){
+      value_now.battery = getBatteryLevel();
+      value_now.temp = bme.readTemperature();
+      value_now.pressure = bme.readPressure() / 100.0F;
+      value_now.humidity = bme.readHumidity();
+      value_now.altitude = bme.readAltitude(SEALEVELPRESSURE_HPA);
+      profile.device_id = profile.device_id;
+      profile.temp = value_now.temp;
+      profile.pressure = value_now.pressure;
+      profile.humidity = value_now.humidity;
+      profileFileWrite(profile);
+      dryValue tmp;
+      profileFileRead(&tmp);
+      debugPrint("-----------------------------");
+      debugPrint("Load parameter");
+      debugPrint("User device id : " + String(profile.device_id));
+      debugPrint("Temp : " + String(tmp.temp) + "");
+      debugPrint("Humidity : " + String(tmp.humidity) + "%");
+      debugPrint("Pressure : " + String(tmp.pressure) + "hPa");
+      debugPrint("-----------------------------");
+    }
 
     while (1) {
         if(g_ble_cmd_req_reset){
@@ -492,6 +523,26 @@ void user_loop(dryValue profile) {
             g_ble_cmd_req_reset = false;
             state = STT_IDLE;
             system_reset = true;
+        }
+
+        // Request set dry profile
+        if(g_ble_cmd_req_setconfig){
+            g_ble_cmd_req_setconfig = false;
+            profile.device_id = profile.device_id;
+            profile.temp = value_now.temp;
+            profile.pressure = value_now.pressure;
+            profile.humidity = value_now.humidity;
+            profileFileWrite(profile);
+            //Read Profile
+            dryValue tmp;
+            profileFileRead(&tmp);
+            debugPrint("-----------------------------");
+            debugPrint("Load parameter");
+            debugPrint("User device id : " + String(profile.device_id));
+            debugPrint("Temp : " + String(tmp.temp) + "");
+            debugPrint("Humidity : " + String(tmp.humidity) + "%");
+            debugPrint("Pressure : " + String(tmp.pressure) + "hPa");
+            debugPrint("-----------------------------");
         }
 
         // Change device id
@@ -567,26 +618,6 @@ void user_loop(dryValue profile) {
                 tx_frame[0] = 0;
                 blesv_user_read.write((uint8_t *) tx_frame,
                                          sizeof(tx_frame));
-
-                // Request set dry profile
-                if(g_ble_cmd_req_setconfig){
-                    g_ble_cmd_req_setconfig = false;
-                    profile.device_id = profile.device_id;
-                    profile.temp = value_now.temp;
-                    profile.pressure = value_now.pressure;
-                    profile.humidity = value_now.humidity;
-                    profileFileWrite(profile);
-                    //Read Profile
-                    dryValue tmp;
-                    profileFileRead(&tmp);
-                    debugPrint("-----------------------------");
-                    debugPrint("Load parameter");
-                    debugPrint("User device id : " + String(profile.device_id));
-                    debugPrint("Temp : " + String(tmp.temp) + "");
-                    debugPrint("Humidity : " + String(tmp.humidity) + "%");
-                    debugPrint("Pressure : " + String(tmp.pressure) + "hPa");
-                    debugPrint("-----------------------------");
-                }
 
                 // request start
                 autoDetect = wetClothesAutoDetect(profile, value_now);
